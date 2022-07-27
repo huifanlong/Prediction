@@ -1,19 +1,15 @@
-from dataProcessing import *
-from model import *
-from train import scores
-import random
+from dataProcessing import read3, event
+import pandas as pd
 
 if __name__ == '__main__':
-    read3()
-    num_1, num_2, num_3 = 0, 0, 0
-    for i in range(0, len(scores)):
-        if int(scores[i]) == 1:
-            num_1 = num_1+1
-        elif int(scores[i]) == 2:
-            num_2 = num_2 + 1
-        else:
-            num_3 = num_3 + 1
-    total = num_1+num_2+num_3
-    print(num_1/total)
-    print(num_2/total)
-    print(num_3/total)
+    read3("data/data_delete_short.csv")
+
+    name = ['event', 'position', 'timestamp', 'status', 'rate']
+    event_frame_list = [pd.DataFrame(columns=name, data=event_i) for event_i in event]
+    keys = [str(event_i) for event_i in range(0, len(event_frame_list))]
+    event_frame = pd.concat(event_frame_list, keys=keys)
+    event_frame.to_csv("data/data_delete_short.csv", encoding='gbk')
+
+    # data = pd.read_csv("data/event_coding.csv")
+    # time_records1 = data[['one']]
+    # print(time_records1)
