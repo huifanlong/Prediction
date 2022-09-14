@@ -2,6 +2,7 @@ import csv
 import string
 import torch
 import numpy as np
+import pandas as pd
 
 time_records, scores = [], []
 time_records_test, scores_test = [], []
@@ -219,74 +220,12 @@ def event_code_first(record, rate_str, event_i):
             i = i + 1
 
 
-# def event_code_no_rate(record, event_i):
-#     record_diff_1 = np.diff(np.array(record))
-#     record_len = len(record_diff_1)
-#     # [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-#     #  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-#     #  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2
-#     #  1 2 1 2 1 2 1 2 1 2 1 2 1 2 1 2 1]
-#     # print(record_diff_1)
-#     record_diff_2 = np.diff(record_diff_1).tolist()
-#     for index, ele in enumerate(record_diff_2):  # 处理diff_2为一条条事件
-#         if ele == 1:
-#             # if record_diff_1[index] == 1:  # i+2,
-#             if record_diff_1[index] == 0 and record_diff_1[index - 1] == 0:  # pl事件
-#                 # 事件类型。0：pl播放，1：pa暂停，2：Sb回退，3：Sf快进，4：Rf倍速，5：Rs慢速，6：Rd正常速
-#                 # 视频位置。对于diff两次之后，某位置对应的原视频位置（即秒数）应该是该位置i+2
-#                 # 事件发生时间（从进入视频页面开始计算）。diff两次之后的某位置i对于的时间秒数
-#                 # 状态。1：playing，0：paused
-#                 # 播放速率。
-#                 event[event_i].append([0, record[index + 1], index + 1, 1, 1])
-#             elif record_diff_1[index] > 2:  # 两个Sf快进事件, 第二个下一步可以检测，这里就不处理
-#                 event[event_i].append([3, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#             elif record_diff_1[index] == -1:  # sb + pa，下一步的pa检测不出，所以这里要处理
-#                 event[event_i].append([2, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#                 event.append([1, record[index + 1], index + 1, 0, 1])
-#             elif record_diff_1[index] < -1:
-#                 event[event_i].append([2, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#         elif ele == -1:
-#             # if record_diff_1[index] == 0:  # Sb事件,i+2
-#             if record_diff_1[index] == 1:  # pa事件
-#                 if index + 2 < record_len:
-#                     if record_diff_1[index + 2] == 0:
-#                         event[event_i].append([1, record[index + 1], index + 1, 0, 1])
-#             elif record_diff_1[index] > 2:  # Sf事件
-#                 event[event_i].append([3, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#             elif record_diff_1[index] < 0:  # Sb事件
-#                 event[event_i].append([2, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#         elif ele > 1:
-#             # if record_diff_1[index] == 0:  # Sf事件，i+2步的，不跨步执法
-#             # if record_diff_1[index] == 1:  # Sf事件，i+2步的，不跨步执法
-#             if record_diff_1[index] < 0:  # Sb事件
-#                 event[event_i].append([2, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#                 if record_diff_1[index + 1] == 0:  # pa事件,i+2步的pa事件检测不出来，所以要在这一步处理
-#                     if index + 2 < record_len:
-#                         if record_diff_1[index + 2] == 0:
-#                             event[event_i].append([1, record[index + 1], index + 1, 0, 1])
-#             elif record_diff_1[index] > 2:  # Sf事件
-#                 event[event_i].append([0, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#         elif ele < -1:
-#             # if record_diff_1[index] == 0:  # Sf事件，i+2步的，不跨步执法
-#             # if record_diff_1[index] == 1:  # Sf事件，i+2步的，不跨步执法
-#             if record_diff_1[index] < 0:  # Sb事件,
-#                 event[event_i].append([2, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#             elif record_diff_1[index] > 2:  # Sf事件, 大于2才算快进
-#                 event[event_i].append([3, record[index + 1], index + 1, event[event_i][-1][3], 1])
-#                 if record_diff_1[index + 1] == 0:  # pa事件,i+2步的pa事件检测不出来，所以要在这一步处理
-#                     if index + 2 < record_len:
-#                         if record_diff_1[index + 2] == 0:
-#                             event[event_i].append([1, record[index + 1], index + 1, 0, 1])
-
 # 该函数处理非常规速度的record_range,并且接受record_range在该record之前的长度信息length_before，以及轨迹序号event_i
 def event_code_with_rate(record_range, length_before, event_i):
     # if len(record_range) > 1:  # 当record_range太小时，就不做以下处理了。默认为这一点record中没有重要事件信息
     if length_before != -1:  # length_before = -1,说明遇到了刚开始就变速的情况，不需要处理
         record_diff_1 = np.diff(np.array(record_range))
         record_len = len(record_diff_1)
-        print(record_range)
-        print(record_diff_1)
-        print(np.diff(record_diff_1))
         # [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
         #  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
         #  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2
@@ -386,3 +325,13 @@ def line_to_tensor(line):
     for li, letter in enumerate(line):
         tensor[li][0][letter_to_index(letter)] = 1
     return tensor
+
+
+if __name__ == '__main__':
+    read3("data/data_delete_short.csv")
+
+    name = ['event', 'position', 'timestamp', 'status', 'rate']
+    event_frame_list = [pd.DataFrame(columns=name, data=event_i) for event_i in event]
+    keys = [str(event_i) for event_i in range(0, len(event_frame_list))]
+    event_frame = pd.concat(event_frame_list, keys=keys)
+    event_frame.to_csv("data/data_delete_short.csv", encoding='gbk')

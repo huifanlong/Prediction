@@ -111,5 +111,5 @@ for epoch in range(1, n_epochs + 1):
 
 # optimizer.swap_swa_sgd()
 torch.optim.swa_utils.update_bn(dataloader, swa_model)
-torch.save(rnn, 'char-rnn-classification_saw.pt')
+torch.save(rnn, 'model/char-rnn-classification_saw.pt')
 print("Done")
