@@ -14,7 +14,7 @@ from util import CustomTraceDataset, category_from_output, my_collate
 
 n_hidden = 128
 n_categories = 3
-n_epochs = 20
+n_epochs = 200
 print_every = 50
 plot_every = 10
 learning_rate = 0.0035  # If you set this too high, it might explode. If too low, it might not learn

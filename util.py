@@ -1,3 +1,5 @@
+import torch
+
 from dataProcessing import *
 from torch.utils.data import Dataset
 import time
@@ -5,10 +7,15 @@ import math
 import random
 import pandas as pd
 
+min_str_length = 30
 
+
+# dataset1：原始的str轨迹数据作为输入
 class CustomTraceDataset(Dataset):
     def __init__(self, csv_file, transform=None, target_transform=None):
         self.records = pd.read_csv(csv_file)
+        # 将轨迹str长度低于某指定最低长度min_str_length的数据清除
+        self.records = self.records[[len(self.records['str'][index].strip().split(" ")) > min_str_length for index in range(0, len(self.records))]]
         self.transform = transform
         self.target_transform = target_transform
 
@@ -17,7 +24,8 @@ class CustomTraceDataset(Dataset):
 
     def __getitem__(self, idx):
         time_record_init = self.records.values[idx, 0]
-        time_record_init = line_to_tensor(time_record_init)
+        time_record_init = list_number_to_tensor(time_record_init.strip().split(" "))  # 新的构建方式
+        # time_record_init = line_to_tensor(time_record_init) # 初始构建方式
         score_init = self.records.values[idx, 1]
         if score_init <= 33:
             score_init = 0
@@ -67,6 +75,26 @@ def timeSince(since):
     s -= m * 60
     return '%dm %ds' % (m, s)
 
+
+def number_to_tensor(num):
+    result = ""
+    while num != 0:
+        ret = int(num % 2)
+        num = int(num / 2)
+        result = str(ret) + result
+    # print(len(result))
+    result = ("0" * (11 - len(result)) + result) if len(result) < 11 else result
+    tensor = torch.zeros(1, 11)
+    for index, ele in enumerate(list(result)):
+        tensor[0][index] = int(ele)
+    return tensor
+
+
+def list_number_to_tensor(list_num):
+    tensor = torch.zeros(len(list_num), 1, 11)
+    for index, ele in enumerate(list_num):
+        tensor[index] = number_to_tensor(int(ele))
+    return tensor
 
 # def random_choice(l):
 #     return l[random.randint(0, len(l) - 1)]
