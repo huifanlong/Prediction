@@ -47,10 +47,10 @@ def train(dataloader):
             hidden = rnn.init_hidden()
             optimizer.zero_grad()
             for i in range(record.size()[0]):
-                output, hidden = rnn(record[i], hidden)  # tensor：(1,3)
+                output, hidden = rnn(record[i].view(1, -1), hidden)  # tensor：(1,3)
                 assert not torch.any(torch.isnan(output))  # assert，对训练过程中的数据进行检查，可以精确定位，一般是对输出结果和loss进行判断
             target = scores_batch[idx_batch]  # tensor：(1,) 具体是0,1,2
-            loss = criterion(output, target)  # 这里表示是在每一条轨迹最后的输出才计算loss，如果叠加其loss是否会让模型更准确呢？
+            loss = criterion(output.view(1, -1), target)  # 这里表示是在每一条轨迹最后的输出才计算loss，如果叠加其loss是否会让模型更准确呢？
             if torch.isnan(loss):
                 sys.exit()
             int_target = target.item()+1
