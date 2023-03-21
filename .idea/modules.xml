@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Prediction_vertion1.iml" filepath="$PROJECT_DIR$/.idea/Prediction_vertion1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/OnRNNModel.iml" filepath="$PROJECT_DIR$/.idea/OnRNNModel.iml" />
     </modules>
   </component>
 </project>

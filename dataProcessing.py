@@ -53,7 +53,7 @@ def read3(path):
         for row in reader:
             # record
             # if 1 < i < 3:
-            temp = row[0].split(" ")
+            temp = row[2].split(" ")
             temp.pop()
             record = [int(x) for x in temp]
             # time_records.append(record)  # 双重列表
@@ -73,8 +73,8 @@ def read3(path):
             else:
                 row[1] = "3"
             # scores.append(row[1])
-
-            event_code_first(record, row[2], i)
+            # row[2] = row[2] + " " + row[3] + " " + row[4] + " " + row[5] + " " + row[6] + " " + row[7] + " " + row[8]
+            event_code_first(record, row[3].strip("'"), i)
             i = i + 1
     # evnet去噪
     # 0.把第一个pl事件之前的事件全都移除？
@@ -135,32 +135,37 @@ def event_code_first(record, rate_str, event_i):
     # 因为不能保证第一个事件一定是pl事件，如果是其他事件而又没有初始化，则会导师在设置该事件时，其status的赋值发生不可访问性错误
     # event.append([])
     event.append([[-1, -1, -1, -1, -1]])
-    if rate_str == '':  # rate 为空：说明没有倍速，只有播放、暂停、快进、快退
+    if rate_str.strip(" ") == '':  # rate 为空：说明没有倍速，只有播放、暂停、快进、快退
         # event_code_no_rate(record, event_i)
         event_code_with_rate(record, 0, event_i)
     else:  # rate 不为空：
         # print(rate_str)
         # print(record)
         # print(np.diff(record))
-        rate_list = rate_str.split(';')  # 用于保存rate的list
-        rate_list.pop()  # 去除最后一个空字符
+        rate_list = rate_str.strip(" ").split(';')  # 用于保存rate的list
+        # rate_list.pop()  # 去除最后一个空字符,或者将循环次数减少1
         # print(rate_list)
         rate_len = len(rate_list)
         record_left_edge = 0  # 用于标记分段处理的record的左边界
         i = 0  # 控制读取rate列表
         rate_ele_before = 0  # 记录上一次的rate，可以先初始化为0
-        while i < rate_len:
+        while i < rate_len-1:
             pair = rate_list[i].split(' ')
             rate_ele = float(pair[0])  # 保存所改变的速率
             sec = int(pair[1])  # 保存改变速率发生的位置
             # 下面这个if-else，是处理sec有可能不在record中的情况
             if sec in record:
                 sec = sec
-            elif (sec - 1) in record:  # 用sec-1替代
-                sec = sec - 1
-            elif (sec + 1) in record:
-                sec = sec + 1
-
+            else:
+                for t in range(1, 5):
+                    if sec-t in record:
+                        sec = sec-t
+                        break
+                    elif sec+t in record:
+                        sec = sec+t
+                        break
+            print(event_i)
+            print(record)
             record_range = record[record_left_edge: record.index(sec)+1]  # 获取record_range：截取当前sec与上一次边界之间的record，来进行处理
 
             # 1.给定length值：根据不同情况赋值不同的length
@@ -275,7 +280,7 @@ def event_code_with_rate(record_range, length_before, event_i):
             elif ele < -1:
                 # if record_diff_1[index] == 0:  # Sf事件，i+2步的，不跨步执法
                 # if record_diff_1[index] == 1:  # Sf事件，i+2步的，不跨步执法
-                if record_diff_1[index] < 0:  # Sb事件,
+                if record_diff_1[index] < 0:  # Sb事件,record_sorted.csv
                     event[event_i].append([2, record_range[index + 1], length_before + index + 1, event[event_i][-1][3], 1 if event[event_i][-1][4]==-1 else event[event_i][-1][4]])
                 elif record_diff_1[index] > 2:  # Sf事件, 稍有变动
                     if len(event[event_i]) == 0:
@@ -328,10 +333,10 @@ def line_to_tensor(line):
 
 
 if __name__ == '__main__':
-    read3("data/data_delete_short.csv")
+    read3("data/sorted_time_record_database.csv")
 
     name = ['event', 'position', 'timestamp', 'status', 'rate']
     event_frame_list = [pd.DataFrame(columns=name, data=event_i) for event_i in event]
     keys = [str(event_i) for event_i in range(0, len(event_frame_list))]
     event_frame = pd.concat(event_frame_list, keys=keys)
-    event_frame.to_csv("data/data_delete_short.csv", encoding='gbk')
+    event_frame.to_csv("data/event_coded_time_record_db.csv", encoding='gbk')
